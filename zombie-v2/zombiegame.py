@@ -182,7 +182,7 @@ def do_step():
 
             # print(z.get_name(), n.get_name(), d_e_e, d_touch)
 
-            if d_e_e <= d_touch:
+            if round(d_e_e,3) <= d_touch:
 
                 x = n.get_xpos()
                 y = n.get_ypos()

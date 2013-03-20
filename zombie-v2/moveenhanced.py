@@ -147,7 +147,7 @@ class MoveEnhanced(Person):
 
         # near means within epsilon units or overlapping the other
         d_e_e = self.distances_to(target)[3]
-        return d_e_e <= epsilon
+        return round(d_e_e,3) <= epsilon
 
     # if the e_to_e distance is <= this value, two persons are near to 
     # touch each other
