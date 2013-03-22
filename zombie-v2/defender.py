@@ -63,7 +63,7 @@ class Defender(MoveEnhanced):
                     self.get_name(), near_z.get_name(), delta_x, delta_y, d_edge_edge))
 
             # but if close enough to teleport, send the zombie to a random
-            # point instead
+            # point instead, round to avoid floating point precision errors
             if round(d_edge_edge,3) <= self.get_teleport_threshold() :
                 (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
                 x = random.randint(x_min, x_max)
