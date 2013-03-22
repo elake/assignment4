@@ -181,7 +181,7 @@ def do_step():
             d_touch = z.get_touching_threshold()
 
             # print(z.get_name(), n.get_name(), d_e_e, d_touch)
-            #Round to avoid precision error
+            #Round to avoid floating point precision error
             if round(d_e_e,3) <= d_touch:
 
                 x = n.get_xpos()
