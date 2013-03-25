@@ -22,7 +22,7 @@ class Zombie(MoveEnhanced):
     def compute_next_move(self):
         if agentsim.debug.get(128):
             pass
-        if 0:
+        if 1:
             delta_x = 0
             delta_y = 0
 

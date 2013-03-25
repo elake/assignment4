@@ -34,23 +34,51 @@ class Normal(MoveEnhanced):
     def compute_next_move(self):
         # if we have a pending zombie alert, act on that first
         zombies = zombie.Zombie.get_all_present_instances()
-        (x, y) = self.influence_map(zombies)
-        return (x, y)
+        (dx, dy) = self.influence_map(zombies)
 
+        x_pos = self.get_xpos()
+        y_pos = self.get_ypos()
+
+
+         
+        (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
+    
+        if not (x_min < x_pos + dx < x_max):
+            x_dir = (dx / abs(dx))
+            real_dx = min(x_min + x_pos, x_max - x_pos)
+            dy = dy + (x_dir * abs(dx))
+            dx = real_dx
+        if not (y_min < y_pos + dy < y_max):
+            y_dir = (dy / abs(dy))
+            real_dy = min(y_min + y_pos, y_max - y_pos)
+            dx = dx + (y_dir * abs(dy))
+            dy = real_dy
+        return (dx, dy)
+
+        
     def influence_map(self, zombies):
         ''' 
         get a direction to go based on the influence map determined by zombies,
         where each zombie influences my position based on the inverse of the
         inverse of the magnitude of the vector of their position and mine.
         '''
-        relative_vectors = []
+        (my_x, my_y) = (self.get_xpos(), self.get_ypos())
+        
+        rel_vectors = []
         for z in zombies:
-            relative_vectors.append(Vector(self.get_xpos() - z.get_xpos(),
-                                           self.get_ypos() - z.get_ypos()))
+            rel_vectors.append(Vector(my_x - z.get_xpos(),
+                                           my_y - z.get_ypos()))
+        
+        # don't get surrounded at the corner!
+        (min_x, min_y, max_x, max_y) = agentsim.gui.get_canvas_coords()
+        rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (min_y - 20)))
+        rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (max_y + 20)))
+        rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (min_y - 20)))
+        rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (max_y + 20)))
         
         move_to = Vector(0, 0)
-        for v in relative_vectors:
-            v = v * (1 / v.magnitude())
+        for v in rel_vectors:
+            v = v * (1 / v.magnitude() ** 2)
             move_to = move_to + v
         
         move_to = move_to.normalize() * self.get_move_limit()
@@ -124,8 +152,13 @@ class Vector():
             return self # I guess pretend none of this ever happened?
 
     def magnitude(self):
-        return (self.x() ** 2 + self.y() ** 2)**(1/2)
+        retval = (self.x() ** 2 + self.y() ** 2)**(1/2)
+        if not retval:
+            return (0.0000000000000000000001)
+        return retval
 
     def normalize(self):
+        if (self.magnitude() == 0):
+            return (float("inf"), float("inf"))
         return (self * (1 / self.magnitude()))
 
