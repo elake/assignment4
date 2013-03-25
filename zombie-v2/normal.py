@@ -80,28 +80,31 @@ class Normal(MoveEnhanced):
                                            my_y - z.get_ypos()))
         
         # don't get surrounded at the corner!
-        # currently uses incomplete functions.
+        # currently uses incomplete functions. I apologize for how crappy this
+        # big block of if statements is. I'll hopefully have it cleaned up
+        # by the time I submit this.
+        of = 20
         (min_x, min_y, max_x, max_y) = agentsim.gui.get_canvas_coords()
-        if top left corner self.get_xpos() < (min_x + 20) and self.get_ypos() < (min_y + 20):
-            if corner_side(nearest_zombie(), tl) == "Go right":
-                rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (min_y - 20)))
+        if top left corner self.get_xpos() < (min_x + of) and self.get_ypos() < (min_y + of):
             if corner_side(nearest_zombie(), tl) == "Go down":
-                rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (min_y - 20)))
-        if bottom left corner self.get_xpos() < (min_x + 20) and self.get_ypos() > (max_y - 20):
+                rel_vectors.append(Vector(my_x - (min_x + of), my_y - (min_y - of)))
+            if corner_side(nearest_zombie(), tl) == "Go right":
+                rel_vectors.append(Vector(my_x - (min_x - of), my_y - (min_y + of)))
+        if bottom left corner self.get_xpos() < (min_x + of) and self.get_ypos() > (max_y - of):
             if corner_side(nearest_zombie(), bl) == "Go right":
-                rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (max_y + 20)))
+                rel_vectors.append(Vector(my_x - (min_x + of), my_y - (max_y - of)))
             if corner_side(nearest_zombie(), bl) == "Go up":
-                rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (max_y + 20)))
-        if top right self.get_xpos() > (max_x - 20) and self.get_ypos() < (min_y + 20):
+                rel_vectors.append(Vector(my_x - (min_x + of), my_y - (max_y - of)))
+        if top right self.get_xpos() > (max_x - of) and self.get_ypos() < (min_y + of):
             if corner_side(nearest_zombie(), tr) == "Go down":
-                rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (min_y - 20)))
+                rel_vectors.append(Vector(my_x - (max_x - of), my_y - (min_y - of)))
             if corner_side(nearest_zombie(), tr) == "Go left":
-                rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (min_y - 20)))
+                rel_vectors.append(Vector(my_x - (max_x + of), my_y - (min_y + of)))
         if self.get_xpos() > (max_x * 0.85) and self.get_ypos() > (max_y * 0.85):
             if corner_side(nearest_zombie(), br) == "Go left":
-                rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (max_y+20)))
+                rel_vectors.append(Vector(my_x - (max_x + of), my_y - (max_y-of)))
             if corner_side(nearest_zombie(), br) == "Go up":
-                rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (max_y+20)))
+                rel_vectors.append(Vector(my_x - (max_x - of), my_y - (max_y+of)))
         
         move_to = Vector(0, 0)
         for v in rel_vectors:
