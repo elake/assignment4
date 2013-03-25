@@ -35,26 +35,36 @@ class Normal(MoveEnhanced):
         # if we have a pending zombie alert, act on that first
         zombies = zombie.Zombie.get_all_present_instances()
         (dx, dy) = self.influence_map(zombies)
-
+        
         x_pos = self.get_xpos()
         y_pos = self.get_ypos()
-
-
+        y_dir = (dy / abs(dy))
+        x_dir = (dx / abs(dx))
+        
          
         (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
     
-        if not (x_min < x_pos + dx < x_max):
-            x_dir = (dx / abs(dx))
+        if not (x_min < x_pos + dx < x_max): # Out of bounds move.
             real_dx = min(x_min + x_pos, x_max - x_pos)
-            dy = dy + (x_dir * abs(dx))
-            dx = real_dx
+            dy = dy + (y_dir * (abs(dx)-abs(real_dx)))
+            dx = x_dir*real_dx
         if not (y_min < y_pos + dy < y_max):
-            y_dir = (dy / abs(dy))
             real_dy = min(y_min + y_pos, y_max - y_pos)
-            dx = dx + (y_dir * abs(dy))
-            dy = real_dy
+            dx = dx + (x_dir * (abs(dy)-abs(real_dy)))
+            dy = y_dir*real_dy
         return (dx, dy)
 
+    def nearest_zombie(self):
+        """
+        Returns the zombie nearest you
+        """
+        pass
+
+    def corner_side(z, corner):
+        """
+        Determines which side a zombie is approaching a corner from
+        """
+        pass
         
     def influence_map(self, zombies):
         ''' 
@@ -70,11 +80,28 @@ class Normal(MoveEnhanced):
                                            my_y - z.get_ypos()))
         
         # don't get surrounded at the corner!
+        # currently uses incomplete functions.
         (min_x, min_y, max_x, max_y) = agentsim.gui.get_canvas_coords()
-        rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (min_y - 20)))
-        rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (max_y + 20)))
-        rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (min_y - 20)))
-        rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (max_y + 20)))
+        if top left corner self.get_xpos() < (min_x + 20) and self.get_ypos() < (min_y + 20):
+            if corner_side(nearest_zombie(), tl) == "Go right":
+                rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (min_y - 20)))
+            if corner_side(nearest_zombie(), tl) == "Go down":
+                rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (min_y - 20)))
+        if bottom left corner self.get_xpos() < (min_x + 20) and self.get_ypos() > (max_y - 20):
+            if corner_side(nearest_zombie(), bl) == "Go right":
+                rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (max_y + 20)))
+            if corner_side(nearest_zombie(), bl) == "Go up":
+                rel_vectors.append(Vector(my_x - (min_x - 20), my_y - (max_y + 20)))
+        if top right self.get_xpos() > (max_x - 20) and self.get_ypos() < (min_y + 20):
+            if corner_side(nearest_zombie(), tr) == "Go down":
+                rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (min_y - 20)))
+            if corner_side(nearest_zombie(), tr) == "Go left":
+                rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (min_y - 20)))
+        if self.get_xpos() > (max_x * 0.85) and self.get_ypos() > (max_y * 0.85):
+            if corner_side(nearest_zombie(), br) == "Go left":
+                rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (max_y+20)))
+            if corner_side(nearest_zombie(), br) == "Go up":
+                rel_vectors.append(Vector(my_x - (max_x + 20), my_y - (max_y+20)))
         
         move_to = Vector(0, 0)
         for v in rel_vectors:
@@ -82,6 +109,8 @@ class Normal(MoveEnhanced):
             move_to = move_to + v
         
         move_to = move_to.normalize() * self.get_move_limit()
+        print("self.get_move_limit() = {s}".format(s=self.get_move_limit()))
+        print("move to x: {a} move to y: {b}".format(a=move_to.x(), b=move_to.y()))
         return (move_to.x(), move_to.y())
 
     def zombie_alert(self, x_dest, y_dest):
