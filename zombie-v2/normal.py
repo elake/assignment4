@@ -74,7 +74,7 @@ class Normal(MoveEnhanced):
 
         # Bottom left corner
         if self.get_xpos() < (x_min + nf) and self.get_ypos() > (y_max - nf):
-            if self.corner_side(self.nearest_z(), -1, 1) or gd and not gr: # Go right
+            if self.avg_c_side(-1, 1) or gd and not gr: # Go right
                 dx = self.get_move_limit() 
                 dy = self.get_move_limit()
                 gd = 1
@@ -86,7 +86,7 @@ class Normal(MoveEnhanced):
 
         # Top right corner
         if self.get_xpos() > (x_max - nf) and self.get_ypos() < (y_min + nf):
-            if self.corner_side(self.nearest_z(), 1, -1) or gd and not gr: # Go down
+            if self.avg_c_side(1, -1) or gd and not gr: # Go down
                 dx = self.get_move_limit()
                 dy = self.get_move_limit()
                 gd = 1
@@ -98,7 +98,7 @@ class Normal(MoveEnhanced):
             
         # Bottom right corner
         if self.get_xpos() > (x_max - nf) and self.get_ypos() > (y_max - nf):
-            if self.corner_side(self.nearest_z(), -1, -1) or gd and not gr: # Go left
+            if self.avg_c_side(-1, -1) or gd and not gr: # Go left
                 dx = self.get_move_limit() * -1
                 dy = self.get_move_limit()
                 gd = 1
@@ -179,6 +179,11 @@ class Normal(MoveEnhanced):
         for z in zombies:
             rel_vectors.append(Vector(my_x - z.get_xpos(),
                                            my_y - z.get_ypos()))
+        for n in Normal.get_all_present_instances():
+            if n.get_name() != self.get_name():
+                rel_vectors.append(Vector(my_x - n.get_xpos(),
+                                           my_y - n.get_ypos()))
+            else: print("found self")
         """
         # don't get surrounded at the corner!
         # currently uses incomplete functions. I apologize for how crappy this
@@ -220,7 +225,7 @@ class Normal(MoveEnhanced):
         """
         move_to = Vector(0, 0)
         for v in rel_vectors:
-            v = v * (1 / v.magnitude() ** 2)
+            v = v * (1 / v.magnitude() ** 3)
             move_to = move_to + v
         
         move_to = move_to.normalize() * self.get_move_limit()
