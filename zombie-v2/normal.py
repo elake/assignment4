@@ -21,7 +21,7 @@ class Normal(MoveEnhanced):
 
         self._zombie_alert_args = None
         self._proxy_scaling = 100
-
+ 
         if agentsim.debug.get(2):
             print("Normal", self._name)
 
@@ -52,19 +52,120 @@ class Normal(MoveEnhanced):
             real_dy = min(y_min + y_pos, y_max - y_pos)
             dx = dx + (x_dir * (abs(dy)-abs(real_dy)))
             dy = y_dir*real_dy
+        
+        nf = 50
+        
+        try: gd
+        except UnboundLocalError: gd = 0
+        try: gr
+        except UnboundLocalError: gr = 0
+
+        # Top left corner
+        if self.get_xpos() < (x_min + nf) and self.get_ypos() < (y_min + nf):
+            if self.avg_c_side(1, 1) or gd and not gr: # Go down
+                dx = self.get_move_limit() * -1
+                dy = self.get_move_limit()
+                gd = 1
+            else: # Go right
+                dx = self.get_move_limit()
+                dy = self.get_move_limit() * -1
+                gr = 1
+        else: (gr, gd) = (0, 0)
+
+        # Bottom left corner
+        if self.get_xpos() < (x_min + nf) and self.get_ypos() > (y_max - nf):
+            if self.corner_side(self.nearest_z(), -1, 1) or gd and not gr: # Go right
+                dx = self.get_move_limit() 
+                dy = self.get_move_limit()
+                gd = 1
+            else: # Go up
+                dx = self.get_move_limit() * -1
+                dy = self.get_move_limit() * -1 
+                gr = 1
+        else: (gr, gd) = (0,0)
+
+        # Top right corner
+        if self.get_xpos() > (x_max - nf) and self.get_ypos() < (y_min + nf):
+            if self.corner_side(self.nearest_z(), 1, -1) or gd and not gr: # Go down
+                dx = self.get_move_limit()
+                dy = self.get_move_limit()
+                gd = 1
+            else: # Go left
+                dx = self.get_move_limit() * -1
+                dy = self.get_move_limit() * -1
+                gr = 1
+        else: (gr, gd) = (0,0)
+            
+        # Bottom right corner
+        if self.get_xpos() > (x_max - nf) and self.get_ypos() > (y_max - nf):
+            if self.corner_side(self.nearest_z(), -1, -1) or gd and not gr: # Go left
+                dx = self.get_move_limit() * -1
+                dy = self.get_move_limit()
+                gd = 1
+            else: # Go up
+                dx = self.get_move_limit()
+                dy = self.get_move_limit() * -1
+                gr = 1
+        else: (gr, gd) = (0,0)
+
         return (dx, dy)
 
-    def nearest_zombie(self):
+    def nearest_z(self):
         """
         Returns the zombie nearest you
         """
-        pass
+        # find nearest zombie if there is one!
+        all_z = zombie.Zombie.get_all_present_instances()
+        if all_z:
+            nearest = min(
+                # make pairs of (person, distance from self to person)
+                [ (z, self.distances_to(z)[0] ) for z in all_z ]
+                ,
+                # and sort by distance
+                key=(lambda x: x[1])
+                )
 
-    def corner_side(z, corner):
+            (near_z, near_d) = nearest
+            return near_z
+
+    def corner_side(self, z, d1, d2):
         """
-        Determines which side a zombie is approaching a corner from
+        Determines which side a zombie is approaching a corner from. d1
+        determines whether the corner is on the top or bottom of the canvas
+        and d2 determines left or right.
+
+        Returns 0 for the Zombie approaching from the bottom and 1 for
+        the Zombie approaching from the top.
         """
-        pass
+        (zx, zy) = (z.get_xpos(), z.get_ypos())
+        (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
+        x_travelled = (zx/ (x_max-x_min))
+        if d1*d2 < 0:
+            x_travelled = 1 - x_travelled
+        if x_travelled < (zy / (y_max-y_min)):
+                return 0
+        else: return 1
+
+    def avg_c_side(self, d1, d2):
+        """
+        Determines which side the zombies are approaching a corner from. d1
+        determines whether the corner is on the top or bottom of the canvas
+        and d2 determines left or right.
+
+        Returns 0 for the Zombie approaching from the bottom and 1 for
+        the Zombie approaching from the top.
+        """
+        zxs = [z.get_xpos() for z in zombie.Zombie.get_all_present_instances()]
+        zys = [z.get_ypos() for z in zombie.Zombie.get_all_present_instances()]
+        zx = sum(zxs) / len(zxs)
+        zy = sum(zys) / len(zys)
+        (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
+        x_travelled = (zx/ (x_max-x_min))
+        if d1*d2 < 0:
+            x_travelled = 1 - x_travelled
+        if x_travelled < (zy / (y_max-y_min)):
+                return 0
+        else: return 1
         
     def influence_map(self, zombies):
         ''' 
@@ -78,34 +179,45 @@ class Normal(MoveEnhanced):
         for z in zombies:
             rel_vectors.append(Vector(my_x - z.get_xpos(),
                                            my_y - z.get_ypos()))
-        
+        """
         # don't get surrounded at the corner!
         # currently uses incomplete functions. I apologize for how crappy this
         # big block of if statements is. I'll hopefully have it cleaned up
         # by the time I submit this.
-        of = 20
+        of = 25
+        nf = 80
         (min_x, min_y, max_x, max_y) = agentsim.gui.get_canvas_coords()
-        if top left corner self.get_xpos() < (min_x + of) and self.get_ypos() < (min_y + of):
-            if corner_side(nearest_zombie(), tl) == "Go down":
-                rel_vectors.append(Vector(my_x - (min_x + of), my_y - (min_y - of)))
-            if corner_side(nearest_zombie(), tl) == "Go right":
-                rel_vectors.append(Vector(my_x - (min_x - of), my_y - (min_y + of)))
-        if bottom left corner self.get_xpos() < (min_x + of) and self.get_ypos() > (max_y - of):
-            if corner_side(nearest_zombie(), bl) == "Go right":
-                rel_vectors.append(Vector(my_x - (min_x + of), my_y - (max_y - of)))
-            if corner_side(nearest_zombie(), bl) == "Go up":
-                rel_vectors.append(Vector(my_x - (min_x + of), my_y - (max_y - of)))
-        if top right self.get_xpos() > (max_x - of) and self.get_ypos() < (min_y + of):
-            if corner_side(nearest_zombie(), tr) == "Go down":
-                rel_vectors.append(Vector(my_x - (max_x - of), my_y - (min_y - of)))
-            if corner_side(nearest_zombie(), tr) == "Go left":
-                rel_vectors.append(Vector(my_x - (max_x + of), my_y - (min_y + of)))
-        if self.get_xpos() > (max_x * 0.85) and self.get_ypos() > (max_y * 0.85):
-            if corner_side(nearest_zombie(), br) == "Go left":
-                rel_vectors.append(Vector(my_x - (max_x + of), my_y - (max_y-of)))
-            if corner_side(nearest_zombie(), br) == "Go up":
-                rel_vectors.append(Vector(my_x - (max_x - of), my_y - (max_y+of)))
         
+        # Top left corner
+        # if self.get_xpos() < (min_x + nf) and self.get_ypos() < (min_y + nf):
+        if self.corner_side(self.nearest_z(), 1, 1): # Go down
+            rel_vectors.append(Vector(my_x - (min_x), my_y - (min_y)))
+        else: # Go right
+            rel_vectors.append(Vector(my_x - (min_x), my_y - (min_y)))
+            print("Zombie coming from {n}".format(n=self.corner_side(self.nearest_z(), 1, 1)))
+
+        # Bottom left corner
+        #if self.get_xpos() < (min_x + nf) and self.get_ypos() > (max_y - nf):
+        if self.corner_side(self.nearest_z(), -1, 1): # Go up
+            rel_vectors.append(Vector(my_x - (min_x + 2*of), my_y - (max_y - of)))
+        else: # Go right
+            rel_vectors.append(Vector(my_x - (min_x + of), my_y - (max_y + of)))
+            print("Zombie coming from {n}".format(n=self.corner_side(self.nearest_z(), -1, 1)))
+
+        # Top right corner
+        #if self.get_xpos() > (max_x - nf) and self.get_ypos() < (min_y + nf):
+        if self.corner_side(self.nearest_z(), 1, -1): # Go down
+            rel_vectors.append(Vector(my_x - (max_x - of), my_y - (min_y - of)))
+        else: # Go left
+            rel_vectors.append(Vector(my_x - (max_x + of), my_y - (min_y + of)))
+            
+        # Bottom right corner
+        #if self.get_xpos() > (max_x - nf) and self.get_ypos() > (max_y - nf):
+        if self.corner_side(self.nearest_z(), -1, -1): # Go left
+            rel_vectors.append(Vector(my_x - (max_x + of), my_y - (max_y-of)))
+        else: # Go up
+            rel_vectors.append(Vector(my_x - (max_x - of), my_y - (max_y+of)))
+        """
         move_to = Vector(0, 0)
         for v in rel_vectors:
             v = v * (1 / v.magnitude() ** 2)
