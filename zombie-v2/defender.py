@@ -2,6 +2,7 @@ import random
 import agentsim
 from person import Person
 from moveenhanced import MoveEnhanced
+import math
 
 # Design note:
 # The only reason for importing zombie and normal is to allow the class queries
@@ -39,7 +40,7 @@ class Defender(MoveEnhanced):
         
 
     def get_author(self):
-        return "Your names go here"
+        return "Connor Peck and Eldon Lake"
     
     def set_defending(self, who):
         '''
@@ -64,8 +65,22 @@ class Defender(MoveEnhanced):
         v = (v.normalize()) * self.get_move_limit()
         return (v.x(), v.y())
 
+    def getnear(self, target):
+        '''
+        get as close to the target as possible
+        '''
+        center_to_center = Vector(target.get_xpos() - self.get_xpos(),
+                                  target.get_ypos() - self.get_ypos())
+        ee_dist = center_to_center.magnitude() - (self.get_size() + 
+                                                  target.get_size())/2 - 1
+        center_to_center = center_to_center.normalize() * ee_dist
+        
+        return (center_to_center.x(), center_to_center.y())
+        
+        
+
     def compute_next_move(self):
-        # intervention procedure:
+       
         normals = normal.Normal.get_all_present_instances()
         if not normals: # nobody to defend
             return (0, 0) 
@@ -75,19 +90,29 @@ class Defender(MoveEnhanced):
         other_defenders = Defender().get_all_present_instances()
         other_defenders.remove(self)
 
-
         near_z = self.nearest_z(zombies)
-        if (near_z):
+        if (near_z): # there is a nearby zombie
             (d, delta_x, delta_y, d_edge_edge) = self.distances_to(near_z)
             if (d_edge_edge <= self.get_move_limit() + 
-                self.get_teleport_threshold()):
-                if d_edge_edge <= self.get_teleport_threshold():
-                    center = center_of_mass(zombies)
-                    if is_occupied(center, normals, zombies, other_defenders):
-                        self.teleport(near_z, center[0], center[1])
+                self.get_teleport_threshold()): # zombie within striking dist
+                # we can teleport the zombie!!
+                if d_edge_edge <= self.get_teleport_threshold(): 
+                    cent = center_of_mass(zombies)
+                    rad = near_z.get_size() 
+                    # find a spot to teleport him!
+                    if is_occupied(cent,rad, normals, zombies, other_defenders):
+                        cent = nearest_unoccupied(cent, rad, normals, zombies,
+                                                  other_defenders)
+                        self.teleport(near_z, cent[0], cent[1]) 
                     else:
-                        pass
-
+                        self.teleport(near_z, cent[0], cent[1])
+                # we are within one move from being able to teleport him!
+                else:
+                    (dx, dy) = self.getnear(near_z) # get closer to teleport
+                    return self.move(dx, dy, normals, zombies, 
+                                       other_defenders)
+                        
+        # intervention procedure:
         (attacked_n, attacking_z) = self.intervene(normals, zombies,
                                                    other_defenders)
         if ((attacked_n is not None) and (attacking_z is not None)):
@@ -98,10 +123,13 @@ class Defender(MoveEnhanced):
             my_position = (self.get_xpos(), self.get_ypos())
             perpendicular_point = line_between.perpendicular_from(my_position)
             # ah the drawbacks of goto being an otherwise-readable function:
-            return self.goto(perpendicular_point[0], perpendicular_point[1])
+            (dx, dy) = self.goto(perpendicular_point[0], perpendicular_point[1])
+            return self.move(dx, dy, normals, zombies, other_defenders)
         
         # intervention procedure has failed! Go to next procedure!
-        return self.goto(self.get_xpos(), self.get_ypos())
+        (dx, dy) = self.goto(self.get_xpos(), self.get_ypos())
+        return self.move(dx, dy, normals, zombies, other_defenders)
+
 
     def intervene(self, normals, zombies, defenders):
         '''
@@ -190,6 +218,13 @@ class Defender(MoveEnhanced):
         else:
             return None
 
+    def move(self, dx, dy, norms, zombs, defends):
+        '''
+        if the space occupied by center_x + dx, center_y + dy is unoccupied,
+        then move there. Else, redirect slightly until I find a way around
+        '''
+
+        return (dx, dy)
 
 def center_of_mass(persons):
     '''
@@ -270,25 +305,36 @@ def midpoint_between(person1, person2):
     (z_x, z_y) = (person2.get_xpos(), person2.get_ypos())
     return ((n_x + z_x)/2, (n_y + z_y)/2)
 
-def is_occupied(center, normals, zombies, defenders, radius):
+def is_occupied(center, radius, normals, zombies, defenders):
     '''
     determine whether some person is within radius of center
     '''
-    for n in normal:
-        v = Vector(center[0] - n.get_xpos, center[1] - n.get_ypos())
+    for n in normals:
+        v = Vector(center[0] - n.get_xpos(), center[1] - n.get_ypos())
         if v.magnitude() < radius:
             return 1
     for z in zombies:
-        v = Vector(center[0] - z.get_xpos, center[1] - z.get_ypos())
+        v = Vector(center[0] - z.get_xpos(), center[1] - z.get_ypos())
         if v.magnitude() < radius:
             return 1
     for d in defenders:
-        v = Vector(center[0] - d.get_xpos, center[1] - d.get_ypos())
+        v = Vector(center[0] - d.get_xpos(), center[1] - d.get_ypos())
         if v.magnitude() < radius:
             return 1
     return 0
     
+def nearest_unoccupied(center, radius, normals, zombies, defenders):
+    '''
+    finds the nearest unoccupied circle about center with given radius 
+    '''
+    (x, y) = center
+    while (is_occupied((x, y), radius, normals, zombies, defenders)):
+        x = x + 2 * radius # pretty garbage, but the due date is soon!
+        y = y + 2 * radius 
+    
+    return (x, y)
 
+                          
 
 class Vector():
     ''' 
@@ -349,6 +395,10 @@ class Vector():
         return retval
 
     def normalize(self):
+        '''
+        yes, yes this should be operating on ME but there's already a bunch of
+        code using this function as-is and there's no time to change it!
+        '''
         if (self.magnitude() == 0):
             return (float("inf"), float("inf"))
         return (self * (1 / self.magnitude()))
