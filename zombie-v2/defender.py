@@ -70,14 +70,23 @@ class Defender(MoveEnhanced):
         if not normals: # nobody to defend
             return (0, 0) 
         zombies = zombie.Zombie.get_all_present_instances()
+        if not zombies:
+            return (0, 0) # nobody to defend from
         other_defenders = Defender().get_all_present_instances()
         other_defenders.remove(self)
 
-        '''
-        nearest_z = self.nearest_z
-        if (nearest_z):
-            if (self.distances_to(nearest_z)[3] < self.
-        '''
+
+        near_z = self.nearest_z(zombies)
+        if (near_z):
+            (d, delta_x, delta_y, d_edge_edge) = self.distances_to(near_z)
+            if (d_edge_edge <= self.get_move_limit() + 
+                self.get_teleport_threshold()):
+                if d_edge_edge <= self.get_teleport_threshold():
+                    center = center_of_mass(zombies)
+                    if is_occupied(center, normals, zombies, other_defenders):
+                        self.teleport(near_z, center[0], center[1])
+                    else:
+                        pass
 
         (attacked_n, attacking_z) = self.intervene(normals, zombies,
                                                    other_defenders)
@@ -85,7 +94,7 @@ class Defender(MoveEnhanced):
             # found someone to defend! so defend them!
             self.set_defending(attacked_n)
             line_between = Line((attacked_n.get_xpos(), attacked_n.get_ypos()), 
-                                (attacking_z.get_xpos(), attacking_z.get_ypos()))
+                               (attacking_z.get_xpos(), attacking_z.get_ypos()))
             my_position = (self.get_xpos(), self.get_ypos())
             perpendicular_point = line_between.perpendicular_from(my_position)
             # ah the drawbacks of goto being an otherwise-readable function:
@@ -181,6 +190,17 @@ class Defender(MoveEnhanced):
         else:
             return None
 
+
+def center_of_mass(persons):
+    '''
+    get and return the center of mass of the given persons
+    '''
+    zxs = [z.get_xpos() for z in persons]
+    zys = [z.get_ypos() for z in persons]
+    zx = sum(zxs) / len(zxs)
+    zy = sum(zys) / len(zys)
+    return (zx, zy)
+        
 def defender_between(normal, zombie, defenders, fineness = 9):
     '''
     if there is a defender between self and normal, return 1; else return
@@ -249,6 +269,26 @@ def midpoint_between(person1, person2):
     (n_x, n_y) = (person1.get_xpos(), person1.get_ypos())
     (z_x, z_y) = (person2.get_xpos(), person2.get_ypos())
     return ((n_x + z_x)/2, (n_y + z_y)/2)
+
+def is_occupied(center, normals, zombies, defenders, radius):
+    '''
+    determine whether some person is within radius of center
+    '''
+    for n in normal:
+        v = Vector(center[0] - n.get_xpos, center[1] - n.get_ypos())
+        if v.magnitude() < radius:
+            return 1
+    for z in zombies:
+        v = Vector(center[0] - z.get_xpos, center[1] - z.get_ypos())
+        if v.magnitude() < radius:
+            return 1
+    for d in defenders:
+        v = Vector(center[0] - d.get_xpos, center[1] - d.get_ypos())
+        if v.magnitude() < radius:
+            return 1
+    return 0
+    
+
 
 class Vector():
     ''' 

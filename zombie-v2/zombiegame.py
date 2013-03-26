@@ -21,7 +21,6 @@ representing a bit vector, where the power of two means:
 
 Eg.
     python3 zombiegame.py --defenders 2 --zombies 7 --normals 10
-
 """
 import sys
 import random

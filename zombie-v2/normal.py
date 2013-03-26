@@ -93,7 +93,7 @@ class Normal(MoveEnhanced):
 
         # Top left corner
         if self.get_xpos() < (x_min + nf) and self.get_ypos() < (y_min + nf):
-            if self.avg_c_side(1, 1) or gd and not gr: # Go down
+            if self.avg_c_side(1, 1, zombies) or gd and not gr: # Go down
                 dx = self.get_move_limit() * -1
                 dy = self.get_move_limit()
                 gd = 1
@@ -105,7 +105,7 @@ class Normal(MoveEnhanced):
 
         # Bottom left corner
         if self.get_xpos() < (x_min + nf) and self.get_ypos() > (y_max - nf):
-            if self.avg_c_side(-1, 1) or gd and not gr: # Go right
+            if self.avg_c_side(-1, 1, zombies) or gd and not gr: # Go right
                 dx = self.get_move_limit() 
                 dy = self.get_move_limit()
                 gd = 1
@@ -117,7 +117,7 @@ class Normal(MoveEnhanced):
 
         # Top right corner
         if self.get_xpos() > (x_max - nf) and self.get_ypos() < (y_min + nf):
-            if self.avg_c_side(1, -1) or gd and not gr: # Go down
+            if self.avg_c_side(1, -1, zombies) or gd and not gr: # Go down
                 dx = self.get_move_limit()
                 dy = self.get_move_limit()
                 gd = 1
@@ -129,7 +129,7 @@ class Normal(MoveEnhanced):
             
         # Bottom right corner
         if self.get_xpos() > (x_max - nf) and self.get_ypos() > (y_max - nf):
-            if self.avg_c_side(-1, -1) or gd and not gr: # Go left
+            if self.avg_c_side(-1, -1, zombies) or gd and not gr: # Go left
                 dx = self.get_move_limit() * -1
                 dy = self.get_move_limit()
                 gd = 1
@@ -177,7 +177,7 @@ class Normal(MoveEnhanced):
                 return 0
         else: return 1
 
-    def avg_c_side(self, d1, d2):
+    def avg_c_side(self, d1, d2, zombies):
         """
         Determines which side the zombies are approaching a corner from. d1
         determines whether the corner is on the top or bottom of the canvas
@@ -186,10 +186,7 @@ class Normal(MoveEnhanced):
         Returns 0 for the Zombie approaching from the bottom and 1 for
         the Zombie approaching from the top.
         """
-        zxs = [z.get_xpos() for z in zombie.Zombie.get_all_present_instances()]
-        zys = [z.get_ypos() for z in zombie.Zombie.get_all_present_instances()]
-        zx = sum(zxs) / len(zxs)
-        zy = sum(zys) / len(zys)
+        (zx, zy) = center_of_mass(zombies)
         (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
         x_travelled = (zx/ (x_max-x_min))
         if d1*d2 < 0:
@@ -284,6 +281,15 @@ class Normal(MoveEnhanced):
         # information when we compute the next move
         self._zombie_alert_args = (x_dest, y_dest)
 
+def center_of_mass(persons):
+    '''
+    get and return the center of mass of the given persons
+    '''
+    zxs = [z.get_xpos() for z in persons]
+    zys = [z.get_ypos() for z in persons]
+    zx = sum(zxs) / len(zxs)
+    zy = sum(zys) / len(zys)
+    return (zx, zy)
 
 class Vector():
     ''' 
