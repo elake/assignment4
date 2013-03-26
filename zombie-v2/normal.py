@@ -214,7 +214,13 @@ class Normal(MoveEnhanced):
             if n.get_name() != self.get_name():
                 rel_vectors.append(Vector(my_x - n.get_xpos(),
                                            my_y - n.get_ypos()))
-        rel_vectors.append(Vector(my_x - self.n_wall()[0], my_y - self.n_wall()[1]))
+        for d in defender.Defender.get_all_present_instances():
+            rel_vectors.append(Vector(my_x - d.get_xpos(),
+                                      my_y - d.get_ypos()))
+
+        rel_vectors.append(Vector(my_x - self.n_wall()[0], 
+                                  my_y - self.n_wall()[1]))
+        
         """
         # don't get surrounded at the corner!
         # currently uses incomplete functions. I apologize for how crappy this

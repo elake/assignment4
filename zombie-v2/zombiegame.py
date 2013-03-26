@@ -23,10 +23,8 @@ Eg.
     python3 zombiegame.py --defenders 2 --zombies 7 --normals 10
 
 """
-
 import sys
 import random
-
 from person import Person
 import moveenhanced
 from normal import Normal
