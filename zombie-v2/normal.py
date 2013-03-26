@@ -31,6 +31,38 @@ class Normal(MoveEnhanced):
     def get_author(self):
         return "Your names go here"
 
+    def n_wall(self):
+        """
+        returns the coordinates of a fake zombie that keeps you away from walls
+        """
+        zinf = 15
+        (my_x, my_y) = (self.get_xpos(), self.get_ypos())
+        (x_min, y_min, x_max, y_max) = agentsim.gui.get_canvas_coords()
+        x_trv = (my_x / (x_max - x_min))
+        y_trv = (my_y / (y_max - y_min))
+        if x_trv > 0.5:
+            x_closest = x_max
+        else:
+            x_closest = x_min
+        if y_trv > 0.5:
+            y_closest = y_max
+        else:
+            y_closest = y_min
+
+        """
+        if abs(0.5 - x_trv) > abs(0.5 - y_trv):
+            ny = my_y
+            nx = sum([my_x, x_closest]) / 2
+        else:
+            ny = sum([my_y, y_closest]) / 2
+            nx = my_x
+        """
+
+        ny = my_y + (zinf / (-0.5 + y_trv))
+        nx = my_x + (zinf / (-0.5 + x_trv))
+
+        return (nx, ny)
+
     def compute_next_move(self):
         # if we have a pending zombie alert, act on that first
         zombies = zombie.Zombie.get_all_present_instances()
@@ -183,7 +215,7 @@ class Normal(MoveEnhanced):
             if n.get_name() != self.get_name():
                 rel_vectors.append(Vector(my_x - n.get_xpos(),
                                            my_y - n.get_ypos()))
-            else: print("found self")
+        rel_vectors.append(Vector(my_x - self.n_wall()[0], my_y - self.n_wall()[1]))
         """
         # don't get surrounded at the corner!
         # currently uses incomplete functions. I apologize for how crappy this
