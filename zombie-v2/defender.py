@@ -73,14 +73,17 @@ class Defender(MoveEnhanced):
         other_defenders = Defender().get_all_present_instances()
         other_defenders.remove(self)
 
+        '''
         nearest_z = self.nearest_z
-        if (nearest_z
-        
+        if (nearest_z):
+            if (self.distances_to(nearest_z)[3] < self.
+        '''
+
         (attacked_n, attacking_z) = self.intervene(normals, zombies,
                                                    other_defenders)
         if ((attacked_n is not None) and (attacking_z is not None)):
             # found someone to defend! so defend them!
-            self.set_defending(n[0])
+            self.set_defending(attacked_n)
             line_between = Line((attacked_n.get_xpos(), attacked_n.get_ypos()), 
                                 (attacking_z.get_xpos(), attacking_z.get_ypos()))
             my_position = (self.get_xpos(), self.get_ypos())
