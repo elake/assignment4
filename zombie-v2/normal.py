@@ -20,7 +20,6 @@ class Normal(MoveEnhanced):
         # this information can be processed.
 
         self._zombie_alert_args = None
-        self._proxy_scaling = 100
  
         if agentsim.debug.get(2):
             print("Normal", self._name)
