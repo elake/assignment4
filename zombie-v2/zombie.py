@@ -62,34 +62,11 @@ class Zombie(MoveEnhanced):
             #target = self.nearest(normals)
             
         return (dx, dy)
-        '''
-        if 1:
-            delta_x = 0
-            delta_y = 0
-
-            # find nearest normal if there is one!
-            all_n = normal.Normal.get_all_present_instances()
-            if all_n:
-                nearest = min(
-                    # make pairs of (person, distance from self to person)
-                    [ (n, self.distances_to(n)[0] ) for n in all_n ]
-                    ,
-                    # and sort by distance
-                    key=(lambda x: x[1])
-                    )
-
-                (near_n, near_d) = nearest
-
-                # move towards nearest normal
-                (d, delta_x, delta_y, d_edge_edge) = self.distances_to(near_n)
-            return (delta_x, delta_y)
-        else:
-            return self.attack_weakest()
-        '''
         
     def nearest_undefended(self, normals, defenders):
         '''
-
+        Finds a nearby target that's far away from a defender.
+        Returns that target.
         '''
         sorted_n = [(n, self.distances_to(n)[0]) for n in normals]
         sorted_n.sort(key = (lambda x: x[1])) # didn't work on 1 line :/
@@ -118,17 +95,10 @@ class Zombie(MoveEnhanced):
         y_start = self.get_ypos()
         y_end = normal.get_ypos()
 
-        #print("(x_start, y_start) = ({}, {})".format(x_start, y_start))
-        #print("(x_end, y_end) = ({}, {})".format(x_end, y_end))
 
         vector_reg = Vector(x_start - x_end, y_start - y_end)
-        #print("vector_reg = {}".format(vector_reg))
-        #input()
         vector_norm = vector_reg.normalize()
-        #print("vector_norm = {}".format(vector_norm))
-        #input()
         radius = vector_reg.magnitude() # radius
-        #print("radius = {}".format(radius))
         n = 9 # division
         radius = radius / n
         # 3)
@@ -136,13 +106,10 @@ class Zombie(MoveEnhanced):
             this_step = vector_norm * (radius/n)
             x_start = x_start - this_step.x()
             y_start = y_start - this_step.y()
-            #print("calling...")
+
             if self.defender_in_circle((x_start, y_start), radius, defenders):
                 return 1
             vector_reg = Vector(x_start - x_end, y_start - y_end)
-            #print("vector_reg = {}".format(vector_reg))
-            #print("vector_reg.magnitude() = {}".format(vector_reg.magnitude()))
-            #input()
 
         return 0
 
@@ -152,14 +119,15 @@ class Zombie(MoveEnhanced):
         center c and radius r, return 1; if the coast is clear, return 0
         '''
         for d in defenders:
-            #print("(center[0], center[1]) = ({}, {})".format(center[0], center[1]))
             v = Vector(d.get_xpos() - center[0], d.get_ypos() - center[1])
             if (v.magnitude() < radius):
                 return 1
         return 0
         
     def attack_target(self, target):
-        # move toward target
+        """
+        Move towards target
+        """
         v = Vector(target.get_xpos() - self.get_xpos(), 
                    target.get_ypos() - self.get_ypos())
         v = v.normalize()
@@ -167,8 +135,12 @@ class Zombie(MoveEnhanced):
         
         return (v.x(), v.y())
 
-
     def attack_weakest(self):
+        """
+        Determines ANY normal that's furthest from a defender. Proximity to
+        self is not considered. (In case you were trying to discern the
+        difference between this and the similar function above)
+        """
         delta_x = 0
         delta_y = 0
 
@@ -243,12 +215,18 @@ class Vector():
             return self # I guess pretend none of this ever happened?
 
     def magnitude(self):
+        """
+        A simple function returning the magnitude of a straight line distance.
+        """
         retval = (self.x() ** 2 + self.y() ** 2)**(1/2)
         if not retval:
             return (0.0000000000000000000001)
         return retval
 
     def normalize(self):
+        """
+        A simple function that normalizes a vector.
+        """
         if (self.magnitude() == 0):
             return (float("inf"), float("inf"))
         return (self * (1 / self.magnitude()))
